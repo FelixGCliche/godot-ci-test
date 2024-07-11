@@ -4,18 +4,18 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch: {}
 
 jobs:
   build:
-    name: Build for ${{ matrix.targetPlatform }}
+    name: Build for ${{ matrix.targetPlatform.name }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        targetPlatform:
-          - win64
-          - html5
+        targetPlatform: [
+          { name: win64, export-name: build, extension: .exe },
+          { name: html5, export-name: index, extension: .html }
+          ]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -24,9 +24,14 @@ jobs:
           lfs: true
       - name: Build container
         run: docker build -t local Docker/. --progress=plain --no-cache
+      - name: Godot Export
+        run: |
+          mkdir -v -p build/${{ matrix.targetPlatform.name }}
+          cd $PROJECT_PATH
+          godot --headless --verbose --export-release "${{ matrix.targetPlatform.name }}" ../build/${{ matrix.targetPlatform.name }}/${{ matrix.targetPlatform.export-name }}.${{matrix.targetPlatform.extension }}
       - name: Upload Artifact
         uses: actions/upload-artifact@v1
         with:
-          name: ${{ matrix.targetPlatform }}
-          path: build/${{ matrix.targetPlatform }}
+          name: ${{ matrix.targetPlatform.name }}
+          path: build/${{ matrix.targetPlatform.name }}
         
