@@ -1,0 +1,24 @@
+name: Godot Export
+description: Creates a Docker container to download Godot binary and export the project with the provided template
+inputs:
+  godot-version: 
+    description: Godot version used to export the project (default 4.1-stable)
+    required: true
+    default: 4.1-stable
+  export-preset: 
+    # Name should be the same as export templates present in Project Settings > Export
+    description: Godot export preset used for export (default win64)
+    required: true
+    default: win64
+  export-name: 
+    # Name should be the same as export templates present in Project Settings > Export
+    description: Name of the final build (default "build.exe" for win64)
+    required: true
+    default: build.exe
+runs:
+  using: docker
+  image: Dockerfile
+  args:
+    - ${{ inputs.godot-version }}
+    - ${{ inputs.export-preset }}
+    - ${{ inputs.export-name }}
