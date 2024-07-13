@@ -6,7 +6,8 @@ on:
       - main
 
 env:
-  GODOT_VERSION: 4.1-stable
+  GODOT_VERSION: '4.1.4'
+  GODOT_PATCH_VERSION: stable
 
 jobs:
   export:
@@ -25,15 +26,36 @@ jobs:
         with:
           fetch-depth: 0
           lfs: true
-      - name: Export Godot
-        uses: ./.github/actions/godot-export
-        with:
-          godot-version: ${{ env.GODOT_VERSION }} 
-          export-preset: ${{ matrix.targetPlatform.name }} 
-          export-name: ${{ matrix.targetPlatform.path }}
-      - name: Upload Build Artifacts
+      - name: Download Godot executable and templates
+        env: 
+          GODOT_URL: "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-${{ env.GODOT_PATCH_VERSION }}/Godot_v${{ env.GODOT_VERSION }}-${{ env.GODOT_PATCH_VERSION }}_linux.x86_64.zip"
+          GODOT_TEMPLATES_URL: "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-${{ env.GODOT_PATCH_VERSION }}/Godot_v${{ env.GODOT_VERSION }}-${{ env.GODOT_PATCH_VERSION }}_export_templates.tpz"
+        run: |
+          echo ${GODOT_URL}
+          curl -L ${GODOT_URL} > godot.zip
+          curl -L ${GODOT_TEMPLATES_URL} > templates.tpz
+
+          unzip godot.zip
+          unzip templates.tpz
+
+          mkdir -vp ~/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_PATCH_VERSION}
+          mv templates/* ~/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_PATCH_VERSION}
+
+          mv Godot_v${GODOT_VERSION}-${GODOT_PATCH_VERSION}_linux.x86_64 godot
+
+          rm -R templates/
+          rm templates.tpz godot.zip
+
+          ls -a
+          tree
+      - name: Export Godot project
+        run: |
+          mkdir -vp build-${{ matrix.targetPlatform.name }}
+          ${GITHUB_WORKSPACE}/godot --headless --export-release ${{ matrix.targetPlatform.name }} build-${{ matrix.targetPlatform.name }}/${{ matrix.targetPlatform.path }}
+          zip -r build-${{ matrix.targetPlatform.name }}.zip build-${{ matrix.targetPlatform.name }}
+      - name: Generate artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.targetPlatform.name }}
-          path: ${{ github.workspace }}/build-${{ matrix.targetPlatform.name }}
-        
+          path: build-${{ matrix.targetPlatform.name }}.zip
+    
