@@ -9,6 +9,11 @@ env:
   GODOT_VERSION: '4.1.4'
   GODOT_PATCH_VERSION: stable
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   export:
     name: Export for ${{ matrix.targetPlatform.name }}
@@ -45,17 +50,39 @@ jobs:
 
           rm -R templates/
           rm templates.tpz godot.zip
-
-          ls -a
-          tree
       - name: Export Godot project
         run: |
           mkdir -vp build-${{ matrix.targetPlatform.name }}
           ${GITHUB_WORKSPACE}/godot --headless --export-release ${{ matrix.targetPlatform.name }} build-${{ matrix.targetPlatform.name }}/${{ matrix.targetPlatform.path }}
-          zip -r build-${{ matrix.targetPlatform.name }}.zip build-${{ matrix.targetPlatform.name }}
       - name: Generate artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.targetPlatform.name }}
-          path: build-${{ matrix.targetPlatform.name }}.zip
+          path: build-${{ matrix.targetPlatform.name }}
+ 
+  deploy:
+    name: Deploy on Github Pages
+    needs: export
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Download export artifacts
+        uses: actions/download-artifact@v4
+        with: 
+          name: build-html5
+      - name: Add coi-service-worker
+        run: |
+          git clone https://github.com/gzuidhof/coi-serviceworker.git
+          mv coi-serviceworker/coi-serviceworker.min.js ./coi-serviceworker.min.js
+          rm -R coi-serviceworker
+          ls -a
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
     
