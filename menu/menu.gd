@@ -343,7 +343,7 @@ func _on_apply_pressed():
 	elif scale_filter_fsr1.button_pressed:
 		Settings.config_file.set_value("video", "scale_filter", Viewport.SCALING_3D_MODE_FSR)
 	elif scale_filter_fsr2.button_pressed:
-		Settings.config_file.set_value("video", "scale_filter", Viewport.SCALING_3D_MODE_FSR2)
+		Settings.config_file.set_value("video", "scale_filter", Viewport.SCALING_3D_MODE_MAX)
 
 	if gi_lightmapgi.button_pressed:
 		Settings.config_file.set_value("rendering", "gi_type", Settings.GIType.LIGHTMAP_GI)

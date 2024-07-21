@@ -20,7 +20,7 @@ const DEFAULTS = {
 		vsync = DisplayServer.VSYNC_ENABLED,
 		max_fps = 0,
 		resolution_scale = 1.0,
-		scale_filter = Viewport.SCALING_3D_MODE_FSR2,
+		scale_filter = Viewport.SCALING_3D_MODE_MAX,
 	},
 	rendering = {
 		taa = false,
