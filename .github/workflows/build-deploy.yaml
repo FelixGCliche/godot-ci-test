@@ -17,7 +17,8 @@ permissions:
 jobs:
   export:
     name: Export for ${{ matrix.targetPlatform.name }}
-    runs-on: [self-hosted, "${{ matrix.targetPlatform.name }}"]
+    runs-on: ubuntu-latest
+    # runs-on: [self-hosted, "${{ matrix.targetPlatform.name }}"]
     strategy:
       fail-fast: false
       matrix:
@@ -64,7 +65,8 @@ jobs:
   deploy:
     name: Deploy on Github Pages
     needs: export
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
+    # runs-on: self-hosted
     steps: 
       - name: Download export artifacts
         uses: actions/download-artifact@v4
