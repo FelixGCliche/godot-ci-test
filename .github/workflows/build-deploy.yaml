@@ -17,7 +17,7 @@ permissions:
 jobs:
   export:
     name: Export for ${{ matrix.targetPlatform.name }}
-    runs-on: self-hosted
+    runs-on: [self-hosted, "${{ matrix.targetPlatform.name }}"]
     strategy:
       fail-fast: false
       matrix:
@@ -59,6 +59,7 @@ jobs:
         with:
           name: build-${{ matrix.targetPlatform.name }}
           path: build-${{ matrix.targetPlatform.name }}
+          retention-days: 1
  
   deploy:
     name: Deploy on Github Pages
@@ -84,5 +85,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-    
