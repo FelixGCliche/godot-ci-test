@@ -16,21 +16,26 @@ permissions:
 
 jobs:
   export:
-    name: Export Godot project templates
+    name: Export for ${{ matrix.targetPlatform.name }}
     runs-on: self-hosted
+    strategy:
+      fail-fast: false
+      matrix:
+        targetPlatform: [
+          { name: win64, path: build.exe },
+          { name: html5, path: index.html }
+        ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           lfs: true
-      
       - name: Download Godot executable and templates
         env: 
           GODOT_URL: "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-${{ env.GODOT_PATCH_VERSION }}/Godot_v${{ env.GODOT_VERSION }}-${{ env.GODOT_PATCH_VERSION }}_linux.x86_64.zip"
           GODOT_TEMPLATES_URL: "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-${{ env.GODOT_PATCH_VERSION }}/Godot_v${{ env.GODOT_VERSION }}-${{ env.GODOT_PATCH_VERSION }}_export_templates.tpz"
         run: |
-          ls -l
           echo ${GODOT_URL}
           curl -L ${GODOT_URL} > godot.zip
           curl -L ${GODOT_TEMPLATES_URL} > templates.tpz
@@ -45,48 +50,39 @@ jobs:
 
           rm -R templates/
           rm templates.tpz godot.zip
-
-      - name: Export Win64 project
+      - name: Export Godot project
         run: |
-          mkdir -vp build-win64
-          ${GITHUB_WORKSPACE}/godot --headless --export-release win64 build-win64/build.exe
-
+          mkdir -vp build-${{ matrix.targetPlatform.name }}
+          ${GITHUB_WORKSPACE}/godot --headless --export-release ${{ matrix.targetPlatform.name }} build-${{ matrix.targetPlatform.name }}/${{ matrix.targetPlatform.path }}
       - name: Generate artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-win64
-          path: build-win64
-
-      - name: Export HTML5 project
-        run: |
-          mkdir -vp build-html5
-          ${GITHUB_WORKSPACE}/godot --headless --export-release html5 build-html5/index.html
-
-      - name: Generate artifacts
-        uses: actions/upload-artifact@v4
-        with:
+          name: build-${{ matrix.targetPlatform.name }}
+          path: build-${{ matrix.targetPlatform.name }}
+ 
+  deploy:
+    name: Deploy on Github Pages
+    needs: export
+    runs-on: self-hosted
+    steps: 
+      - name: Download export artifacts
+        uses: actions/download-artifact@v4
+        with: 
           name: build-html5
-          path: build-html5
-
       - name: Add coi-service-worker
         run: |
           git clone https://github.com/gzuidhof/coi-serviceworker.git
-          mv coi-serviceworker/coi-serviceworker.min.js build-html5/coi-serviceworker.min.js
+          mv coi-serviceworker/coi-serviceworker.min.js ./coi-serviceworker.min.js
           rm -R coi-serviceworker
           ls -a
-      
       - name: Setup Pages
         uses: actions/configure-pages@v5
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'build-html5'
-      
+          path: '.'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-      
 
     
